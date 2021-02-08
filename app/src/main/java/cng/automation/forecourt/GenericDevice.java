@@ -10,7 +10,7 @@ public abstract class GenericDevice {
     }
 
     private GenericDevice() {
-        throw new IllegalCallerException("Generic device should not be constructed without ID.");
+        throw new IllegalStateException("Generic device should not be constructed without ID.");
     }
 
     public GenericDevice(int id) {
