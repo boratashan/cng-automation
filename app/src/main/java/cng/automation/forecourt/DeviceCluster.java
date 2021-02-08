@@ -3,17 +3,15 @@ package cng.automation.forecourt;
 import cng.automation.generics.TBD;
 import cng.automation.generics.TupleEventListener;
 
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Objects;
 
-public class DeviceCluster extends GenericDevice implements DispenserActions{
+public class DeviceCluster<T extends DevicePollable> extends GenericDevice {
 
 
     private static final long CLUSTER_DELAY_DEFAULT_LOOP = 200;
     private static final long CLUSTER_DELAY_BETWEEN_REQUEST_IN_MS = 100;
 
-    private ArrayList<Dispenser> dispensers;
+    private ArrayList<T> devices;
 
     private String host;
     private int port;
@@ -21,43 +19,26 @@ public class DeviceCluster extends GenericDevice implements DispenserActions{
 
     private final Thread clusterThread;
     private boolean isStarted = false;
-    private TupleEventListener<Dispenser, TBD> onDispenserStatus;
-    private TupleEventListener<Dispenser, TBD> onTransactionCompleted;
-    private TupleEventListener<Dispenser, TBD> onError;
-
 
     public DeviceCluster(int id) {
         super(id);
-        dispensers = new ArrayList<>();
-        clusterThread = new Thread(new ClusterTask(this));
+        devices = new ArrayList<>();
+        clusterThread = new Thread(new ClusterTask<T>(this));
         clusterThread.start();
 
     }
 
 
-    public void addDispenser(Dispenser dispenser) {
-        if (dispensers.contains(dispenser))
+    public void addDevice(T device) {
+        if (devices.contains(device))
             throw new IllegalArgumentException("Device connected with the same ID is already in the list!");
-        dispensers.add(dispenser);
-    }
-
-    public void onDispenserStatus(TupleEventListener<Dispenser, TBD> event) {
-        this.onDispenserStatus = event;
-    }
-
-    public void onTransactionCompleted(TupleEventListener<Dispenser, TBD> event) {
-        this.onTransactionCompleted = event;
-    }
-
-    public void onError(TupleEventListener<Dispenser, TBD> event) {
-        this.onError = event;
+        devices.add(device);
     }
 
 
+    private class ClusterTask<T extends DevicePollable> implements Runnable {
 
-    private class ClusterTask implements Runnable {
-
-        private final DeviceCluster parent;
+        private final DeviceCluster<T> parent;
 
         public ClusterTask(DeviceCluster parent) {
             this.parent = parent;
@@ -72,8 +53,27 @@ public class DeviceCluster extends GenericDevice implements DispenserActions{
                     if (!isStarted) continue;
                 try {
                         //TODO : Open connection to channel
-                        for (Dispenser dispenser : this.parent.dispensers) {
-                            dispenser.process();
+                        for (T device : this.parent.devices) {
+                            PackageRequest cmdToExec = device.getCommandToExec();
+
+
+                            //Send command by Transporter
+                            //Read packet from Transporter
+                            //Decode packet and convert to packet
+                            //send dispensers to process
+                            boolean isPkgProcessed = false;
+                            PackageResponse response = null;
+                            isPkgProcessed = device.process(response);
+                            if (!isPkgProcessed) {
+                                for (T d : this.parent.devices) {
+                                    isPkgProcessed = d.process(response);
+                                    if (isPkgProcessed)
+                                        break;
+                                }
+                            }
+                            if (!isPkgProcessed) {
+                                //Todo Packet is not processed, log it and create an alarm to get insight about
+                            }
                             Thread.sleep(CLUSTER_DELAY_BETWEEN_REQUEST_IN_MS);
                         }
                         //Todo Implement devices communication and dispatching here

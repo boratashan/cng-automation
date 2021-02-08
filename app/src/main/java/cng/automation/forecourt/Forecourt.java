@@ -4,8 +4,10 @@ import cng.automation.generics.SingleEventListener;
 import cng.automation.generics.TBD;
 import cng.automation.generics.TupleEventListener;
 
+import java.util.stream.Stream;
 
-public interface Forecourt extends DispenserActions {
+
+public interface Forecourt  {
     ForecourtSetup setup();
     ForecourtSetup setSetup(ForecourtSetup setup);
     /*Important
@@ -21,5 +23,11 @@ public interface Forecourt extends DispenserActions {
     void startDispenser(int dispenserNo);
     void stopDispenser(int dispenserNo);
     void setPrice(int dispenserNo, double price);
+
+    Stream<CngDispenser> getDispensers();
+
+
+
+
 
 }

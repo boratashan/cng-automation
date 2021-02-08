@@ -1,6 +1,7 @@
 package cng.automation.forecourt;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 public class ForecourtSetup  {
     private Set<DeviceCluster> clusters;
@@ -16,8 +17,12 @@ public class ForecourtSetup  {
         clusters.add(connector);
     }
 
-    public void addDispenser(DeviceCluster cluster, Dispenser dispenser) {
-        cluster.addDispenser(dispenser);
+    public void addDispenser(DeviceCluster cluster, CngDispenser dispenser) {
+        cluster.addDevice(dispenser);
+    }
+
+    public Stream<DeviceCluster> getClusters() {
+        return this.clusters.stream();
     }
 
 

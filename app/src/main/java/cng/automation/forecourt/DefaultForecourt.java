@@ -1,16 +1,14 @@
 package cng.automation.forecourt;
 
-import cng.automation.forecourt.Forecourt;
-import cng.automation.generics.SingleEventListener;
 import cng.automation.generics.TBD;
 import cng.automation.generics.TupleEventListener;
+
+import java.util.stream.Stream;
 
 public class DefaultForecourt implements Forecourt {
 
     private ForecourtSetup setup;
-    private TupleEventListener<Dispenser, TBD> onDispenserStatus;
-    private TupleEventListener<Dispenser, TBD> onTransactionCompleted;
-    private TupleEventListener<Dispenser, TBD> onError;
+
 
 
     public ForecourtSetup setSetup(ForecourtSetup setup) {
@@ -48,16 +46,10 @@ public class DefaultForecourt implements Forecourt {
 
     }
 
-    public void onDispenserStatus(TupleEventListener<Dispenser, TBD> event) {
-        this.onDispenserStatus = event;
+    @Override
+    public Stream<CngDispenser> getDispensers() {
+        return null;
     }
 
-    public void onTransactionCompleted(TupleEventListener<Dispenser, TBD> event) {
-        this.onTransactionCompleted = event;
-    }
-
-    public void onError(TupleEventListener<Dispenser, TBD> event) {
-        this.onError = event;
-    }
 
 }

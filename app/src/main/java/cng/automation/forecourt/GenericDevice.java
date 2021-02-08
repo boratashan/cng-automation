@@ -2,7 +2,7 @@ package cng.automation.forecourt;
 
 import java.util.Objects;
 
-public class GenericDevice {
+public abstract class GenericDevice {
     private int id;
 
     public int getId() {

@@ -4,6 +4,7 @@
 package cng.automation;
 
 import cng.automation.forecourt.*;
+import cng.automation.forecourt.proto.parkercngdispenser.ParkerCngDispenser;
 
 public class App {
     public String getGreeting() {
@@ -20,15 +21,19 @@ public class App {
         ForecourtSetup setup = new ForecourtSetup();
         DeviceCluster connector01 = DeviceCluster.Builder.aDeviceConnector().withId(1).withHost("127.0.0.1").withPort(10700).build();
         DeviceCluster connector02 = DeviceCluster.Builder.aDeviceConnector().withId(2).withHost("127.0.0.1").withPort(10700).build();
-        connector01.addDispenser(new Dispenser(10));
-        connector01.addDispenser(new Dispenser(11));
+        ParkerCngDispenser dispenser01 = new ParkerCngDispenser(10);
+
+        connector01.addDevice(dispenser01);
+        connector01.addDevice(new ParkerCngDispenser(11));
         setup.addDeviceConnector(connector01);
         setup.addDeviceConnector(connector02);
 
 
         forecourt.setSetup(setup);
-
         forecourt.start();
+
+
+
 
 
 
