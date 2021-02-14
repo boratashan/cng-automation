@@ -3,22 +3,15 @@ package cng.automation.forecourt.proto.parkercngdispenser.request;
 import cng.automation.forecourt.proto.parkercngdispenser.ParkerCngRequest;
 import cng.automation.forecourt.proto.parkercngdispenser.RequestType;
 
-public class ParkerCngGetDataCngRequest extends ParkerCngRequest {
-
-
+public class ParkerCngPriceUpdateRequest extends ParkerCngRequest {
     private final int dispenserId;
 
-    public ParkerCngGetDataCngRequest(int dispenserId) {
+    public ParkerCngPriceUpdateRequest(int dispenserId, double Price) {
         this.dispenserId = dispenserId;
     }
 
-    public int getDispenserId() {
-        return dispenserId;
-    }
-
-
     @Override
     public RequestType getType() {
-        return RequestType.GETDATA_REQUEST;
+        return RequestType.UPDATE_PRICES;
     }
 }

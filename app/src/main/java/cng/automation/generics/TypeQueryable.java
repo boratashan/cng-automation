@@ -1,7 +1,5 @@
 package cng.automation.generics;
 
-import cng.automation.forecourt.PackageResponse;
-
-public interface TypeQueryable<T> {
+public interface TypeQueryable<T extends Enum<?>> {
     T getType();
 }

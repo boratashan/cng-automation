@@ -1,6 +1,7 @@
 package cng.automation.forecourt.proto.parkercngdispenser;
 
-public enum ParkerCngResponseType {
+public enum ResponseType {
     STATUS,
-    DATA
+    DATA,
+    TRANSACTION
 }

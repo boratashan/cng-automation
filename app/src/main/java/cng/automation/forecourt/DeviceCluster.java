@@ -1,31 +1,30 @@
 package cng.automation.forecourt;
 
-import cng.automation.generics.TBD;
 import cng.automation.generics.TupleEventListener;
+import com.intelligt.modbus.jlibmodbus.exception.ModbusIOException;
 
 import java.util.ArrayList;
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class DeviceCluster<T extends DevicePollable> extends GenericDevice {
 
 
-    private static final long CLUSTER_DELAY_DEFAULT_LOOP = 200;
-    private static final long CLUSTER_DELAY_BETWEEN_REQUEST_IN_MS = 100;
+    private static final long CLUSTER_DELAY_DEFAULT_LOOP = 200 * 5;
+    private static final long CLUSTER_DELAY_BETWEEN_REQUEST_IN_MS = 100 * 10;
+    private final ArrayList<T> devices;
+    private final Transporter<?, ?> transporter;
+    private final AtomicBoolean startFlag;
+    private Thread clusterThread;
+    private TupleEventListener<DeviceCluster<?>, PackageResponse> onPacketProcessErrorEvent;
+    private TupleEventListener<DeviceCluster<?>, PackageRequest> onSendPacketEvent;
+    private TupleEventListener<DeviceCluster<?>, PackageResponse> onReceivePacketEvent;
 
-    private ArrayList<T> devices;
-
-    private String host;
-    private int port;
-
-
-    private final Thread clusterThread;
-    private boolean isStarted = false;
-
-    public DeviceCluster(int id) {
+    public DeviceCluster(int id, Transporter<?, ?> transporter) {
         super(id);
+        this.startFlag = new AtomicBoolean(false);
+        this.transporter = transporter;
         devices = new ArrayList<>();
-        clusterThread = new Thread(new ClusterTask<T>(this));
-        clusterThread.start();
-
     }
 
 
@@ -35,95 +34,84 @@ public class DeviceCluster<T extends DevicePollable> extends GenericDevice {
         devices.add(device);
     }
 
+    public void start() {
+        startFlag.set(true);
+        clusterThread = new Thread(new ClusterTask<T>(this));
+        clusterThread.start();
+    }
 
-    private class ClusterTask<T extends DevicePollable> implements Runnable {
+    public void stop() {
+        startFlag.set(false);
+        clusterThread.interrupt();
+    }
 
-        private final DeviceCluster<T> parent;
+    public void onPackageProcessError(TupleEventListener<DeviceCluster<?>, PackageResponse> event) {
+        this.onPacketProcessErrorEvent = event;
+    }
+
+    public void onPackageSentEvent(TupleEventListener<DeviceCluster<?>, PackageRequest> event) {
+        this.onSendPacketEvent = event;
+    }
+
+    public void onPackageReceived(TupleEventListener<DeviceCluster<?>, PackageResponse> event) {
+        this.onReceivePacketEvent = event;
+    }
+
+    private class ClusterTask<S extends DevicePollable> implements Runnable {
+
+        private final DeviceCluster<S> parent;
+        private final Transporter transporter;
 
         public ClusterTask(DeviceCluster parent) {
             this.parent = parent;
+            transporter = parent.transporter;
         }
 
         @Override
         public void run() {
             try {
-                int terminalToExec = -1;
-                while (true) {
+                while (parent.startFlag.get()) {
                     Thread.sleep(CLUSTER_DELAY_DEFAULT_LOOP);
-                    if (!isStarted) continue;
-                try {
-                        //TODO : Open connection to channel
-                        for (T device : this.parent.devices) {
-                            PackageRequest cmdToExec = device.getCommandToExec();
-
-
-                            //Send command by Transporter
-                            //Read packet from Transporter
-                            //Decode packet and convert to packet
-                            //send dispensers to process
-                            boolean isPkgProcessed = false;
-                            PackageResponse response = null;
-                            isPkgProcessed = device.process(response);
-                            if (!isPkgProcessed) {
-                                for (T d : this.parent.devices) {
-                                    isPkgProcessed = d.process(response);
-                                    if (isPkgProcessed)
-                                        break;
-                                }
-                            }
-                            if (!isPkgProcessed) {
-                                //Todo Packet is not processed, log it and create an alarm to get insight about
-                            }
-                            Thread.sleep(CLUSTER_DELAY_BETWEEN_REQUEST_IN_MS);
+                    if (!transporter.isConnected()) {
+                        transporter.connect();
+                    }
+                    for (S device : this.parent.devices) {
+                        PackageRequest cmdToExec = device.getCommandToExec();
+                        if (Objects.nonNull(this.parent.onSendPacketEvent)) {
+                            this.parent.onSendPacketEvent.onEvent(this.parent, cmdToExec);
                         }
-                        //Todo Implement devices communication and dispatching here
-                    } catch (Exception e) {
-                        //Todo Close Connection in case of error
+                        PackageResponse response = transporter.send(cmdToExec);
+                        if (Objects.nonNull(this.parent.onReceivePacketEvent)) {
+                            this.parent.onReceivePacketEvent.onEvent(this.parent, response);
+                        }
+                        boolean isPkgProcessed = device.process(response);
+                        if (!isPkgProcessed) {
+                            for (S d : this.parent.devices) {
+                                if (device.equals(d))
+                                    continue;
+                                isPkgProcessed = d.process(response);
+                                if (isPkgProcessed)
+                                    break;
+                            }
+                        }
+                        if (!isPkgProcessed) {
+                            if (Objects.nonNull(this.parent.onPacketProcessErrorEvent)) {
+                                this.parent.onPacketProcessErrorEvent.onEvent(this.parent, response);
+                            }
+                        }
                     }
                 }
-            } catch (InterruptedException e) {
-                //Todo cleanup
+            } catch (InterruptedException | ModbusIOException e) {
+                /**/
+            } finally {
+                if (transporter.isConnected()) {
+                    try {
+                        transporter.disconnect();
+                    } catch (ModbusIOException e) {
+                        e.printStackTrace();
+                    }
+                }
             }
-
         }
     }
-
-
-
-
-    public static final class Builder {
-        private String host;
-        private int port;
-        private int id;
-
-        private Builder() {
-        }
-
-        public static Builder aDeviceConnector() {
-            return new Builder();
-        }
-
-        public Builder withHost(String host) {
-            this.host = host;
-            return this;
-        }
-
-        public Builder withPort(int port) {
-            this.port = port;
-            return this;
-        }
-
-        public Builder withId(int id) {
-            this.id = id;
-            return this;
-        }
-
-        public DeviceCluster build() {
-            DeviceCluster deviceCluster = new DeviceCluster(id);
-            deviceCluster.host = this.host;
-            deviceCluster.port = this.port;
-            return deviceCluster;
-        }
-    }
-
 }

@@ -1,34 +1,33 @@
 package cng.automation.forecourt;
 
-import cng.automation.generics.TBD;
-import cng.automation.generics.TupleEventListener;
+import java.util.Objects;
 
-import java.util.stream.Stream;
 
 public class DefaultForecourt implements Forecourt {
 
     private ForecourtSetup setup;
 
 
+    @Override
+    public ForecourtSetup setup() {
+        return this.setup;
+    }
 
+    @Override
     public ForecourtSetup setSetup(ForecourtSetup setup) {
         this.setup = setup;
         return this.setup;
     }
 
     @Override
-    public ForecourtSetup setup() {
-        return setup;
-    }
-
-    @Override
     public void start() {
-
+        Objects.requireNonNull(this.setup, "Forecourt can not start without setup!");
+        this.setup.getClusters().forEach(deviceCluster -> deviceCluster.start());
     }
 
     @Override
     public void stop() {
-
+        this.setup.getClusters().forEach(deviceCluster -> deviceCluster.stop());
     }
 
     @Override
@@ -46,10 +45,6 @@ public class DefaultForecourt implements Forecourt {
 
     }
 
-    @Override
-    public Stream<CngDispenser> getDispensers() {
-        return null;
-    }
 
 
 }

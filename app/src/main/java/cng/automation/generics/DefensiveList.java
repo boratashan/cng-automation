@@ -8,7 +8,7 @@ import java.util.Objects;
 
 public abstract class DefensiveList<T extends Cloneable> {
 
-    private List<T> list = new ArrayList<>();
+    private final List<T> list = new ArrayList<>();
 
     public boolean add(T t) {
         return list.add(t);

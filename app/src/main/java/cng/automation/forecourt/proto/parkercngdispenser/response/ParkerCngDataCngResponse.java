@@ -1,7 +1,9 @@
 package cng.automation.forecourt.proto.parkercngdispenser.response;
 
 import cng.automation.forecourt.proto.parkercngdispenser.ParkerCngResponse;
-import cng.automation.forecourt.proto.parkercngdispenser.ParkerCngResponseType;
+import cng.automation.forecourt.proto.parkercngdispenser.ResponseType;
+
+import java.util.StringJoiner;
 
 public class ParkerCngDataCngResponse extends ParkerCngResponse {
     //Todo refactor below section and implement getter/setter s.
@@ -30,9 +32,35 @@ public class ParkerCngDataCngResponse extends ParkerCngResponse {
     public float gasFlowRateArm02;
 
 
+    @Override
+    public ResponseType getType() {
+        return ResponseType.DATA;
+    }
 
     @Override
-    public ParkerCngResponseType getType() {
-        return ParkerCngResponseType.DATA;
+    public String toString() {
+        return new StringJoiner(", ", ParkerCngDataCngResponse.class.getSimpleName() + "[", "]")
+                .add("dispenserId=" + dispenserId)
+                .add("lastFillQuantityInKgArm01=" + lastFillQuantityInKgArm01)
+                .add("lastFillAmountInRsArm01=" + lastFillAmountInRsArm01)
+                .add("flowMeterMassTotalArm01=" + flowMeterMassTotalArm01)
+                .add("dispenserMeteredTotalArm01=" + dispenserMeteredTotalArm01)
+                .add("gasRateArm01=" + gasRateArm01)
+                .add("currentFillQtyArm01=" + currentFillQtyArm01)
+                .add("currentFillPrcArm01=" + currentFillPrcArm01)
+                .add("pressure01Arm01=" + pressure01Arm01)
+                .add("pressure02Arm01=" + pressure02Arm01)
+                .add("gasFlowRateArm01=" + gasFlowRateArm01)
+                .add("lastFillQuantityInKgArm02=" + lastFillQuantityInKgArm02)
+                .add("lastFillAmountInRsArm02=" + lastFillAmountInRsArm02)
+                .add("flowMeterMassTotalArm02=" + flowMeterMassTotalArm02)
+                .add("dispenserMeteredTotalArm02=" + dispenserMeteredTotalArm02)
+                .add("gasRateArm02=" + gasRateArm02)
+                .add("currentFillQtyArm02=" + currentFillQtyArm02)
+                .add("currentFillPrcArm02=" + currentFillPrcArm02)
+                .add("pressure01Arm02=" + pressure01Arm02)
+                .add("pressure02Arm02=" + pressure02Arm02)
+                .add("gasFlowRateArm02=" + gasFlowRateArm02)
+                .toString();
     }
 }

@@ -3,10 +3,20 @@ package cng.automation.forecourt;
 import java.util.Objects;
 
 public abstract class GenericDevice {
-    private int id;
+    private final int id;
+    private int address;
 
     public int getId() {
         return id;
+    }
+
+    public int getAddress() {
+        return address;
+    }
+
+    public GenericDevice setAddress(int address) {
+        this.address = address;
+        return this;
     }
 
     private GenericDevice() {

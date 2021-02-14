@@ -5,39 +5,74 @@ package cng.automation;
 
 import cng.automation.forecourt.*;
 import cng.automation.forecourt.proto.parkercngdispenser.ParkerCngDispenser;
+import cng.automation.forecourt.proto.parkercngdispenser.ParkerCngModbusRtuTransporter;
+import cng.automation.forecourt.proto.parkercngdispenser.response.ParkerCngDataCngResponse;
+import cng.automation.forecourt.proto.parkercngdispenser.response.ParkerCngStatusCngResponse;
 
 public class App {
     public String getGreeting() {
         return "FCC Control test application!";
     }
 
-    public static void main(String[] args) {
-        System.out.println(new App().getGreeting());
+    public static void main(String[] args) throws InterruptedException {
+        new App().run();
+    }
 
+
+    public void run() throws InterruptedException {
+        System.out.println(getGreeting());
         System.out.println("App is starting...");
-
         Forecourt forecourt = new DefaultForecourt();
-
         ForecourtSetup setup = new ForecourtSetup();
-        DeviceCluster connector01 = DeviceCluster.Builder.aDeviceConnector().withId(1).withHost("127.0.0.1").withPort(10700).build();
-        DeviceCluster connector02 = DeviceCluster.Builder.aDeviceConnector().withId(2).withHost("127.0.0.1").withPort(10700).build();
-        ParkerCngDispenser dispenser01 = new ParkerCngDispenser(10);
 
+        Transporter transporter01 = new ParkerCngModbusRtuTransporter("127.0.0.1", 10700);
+        Transporter transporter02 = new ParkerCngModbusRtuTransporter("127.0.0.1", 10701);
+
+        DeviceCluster<ParkerCngDispenser> connector01 = new DeviceCluster(1, transporter01);
+        DeviceCluster<ParkerCngDispenser> connector02 = new DeviceCluster(2, transporter02);
+
+        ParkerCngDispenser dispenser01 = new ParkerCngDispenser(10);
+        ParkerCngDispenser dispenser02 = new ParkerCngDispenser(11);
         connector01.addDevice(dispenser01);
-        connector01.addDevice(new ParkerCngDispenser(11));
+        connector01.addDevice(dispenser02);
         setup.addDeviceConnector(connector01);
         setup.addDeviceConnector(connector02);
-
-
         forecourt.setSetup(setup);
+
+        connector01.onPackageProcessError(this::processPackageProcessError);
+        connector01.onPackageSentEvent(this::processPackageSentEvent);
+        connector01.onPackageReceived(this::processPackageReceivedEvent);
+
+        connector02.onPackageProcessError(this::processPackageProcessError);
+        connector02.onPackageSentEvent(this::processPackageSentEvent);
+        connector02.onPackageReceived(this::processPackageReceivedEvent);
+        dispenser01.onDispenserStatus(this::processOnDispenserStatus);
+        dispenser01.onDispenserDataReport(this::processOnDispenserDataReport);
+        dispenser02.onDispenserStatus(this::processOnDispenserStatus);
+        dispenser02.onDispenserDataReport(this::processOnDispenserDataReport);
+
         forecourt.start();
-
-
-
-
-
-
+        //Thread.sleep(5000);
+        //forecourt.stop();
         System.out.println("App is ending...");
 
     }
+
+    private void processPackageReceivedEvent(DeviceCluster deviceCluster, PackageResponse packageResponse) {
+    }
+
+    private void processPackageSentEvent(DeviceCluster deviceCluster, PackageRequest packageRequest) {
+    }
+
+    private void processPackageProcessError(DeviceCluster deviceCluster, PackageResponse packageResponse) {
+    }
+
+    private void processOnDispenserDataReport(ParkerCngDispenser parkerCngDispenser, ParkerCngDataCngResponse parkerCngDataCngResponse) {
+        System.out.printf("%s -> Dispenser : %s,  Message : %s %n", "processOnDispenserDataReport", parkerCngDispenser.toString(), parkerCngDataCngResponse.toString());
+    }
+
+    private void processOnDispenserStatus(ParkerCngDispenser parkerCngDispenser, ParkerCngStatusCngResponse parkerCngStatusCngResponse) {
+        System.out.printf("%s -> Dispenser : %s,  Message : %s %n", "processOnDispenserStatus", parkerCngDispenser.toString(), parkerCngStatusCngResponse.toString());
+    }
+
 }

@@ -1,10 +1,11 @@
 package cng.automation.forecourt;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.stream.Stream;
 
 public class ForecourtSetup  {
-    private Set<DeviceCluster> clusters;
+    private final Set<DeviceCluster> clusters;
 
     public ForecourtSetup() {
         clusters = new HashSet<>();
